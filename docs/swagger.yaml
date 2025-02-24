@@ -1,0 +1,251 @@
+definitions:
+  main.AddUserRequest:
+    properties:
+      age:
+        type: integer
+      email:
+        type: string
+      employee:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+      version:
+        type: string
+    required:
+    - age
+    - email
+    - name
+    - password
+    - version
+    type: object
+  main.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  main.User:
+    properties:
+      age:
+        type: integer
+      email:
+        type: string
+      employee:
+        type: boolean
+      id:
+        type: string
+      license_version:
+        type: string
+      locked:
+        type: boolean
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: blake.katz@airista.com
+    name: BlakeKatz
+  description: Test work for managing users
+  termsOfService: http://swagger.io/terms/
+  title: User Managment Rest API
+  version: "1.0"
+paths:
+  /:
+    get:
+      consumes:
+      - application/json
+      description: Home page
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Home
+      tags:
+      - Main
+  /adduser:
+    post:
+      description: Adds a user based on the provided JSON body
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/main.AddUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Adds a user based on the provided JSON body
+      tags:
+      - Users
+  /lockbyid/{UUID}:
+    post:
+      description: Toggles a users locked account status
+      parameters:
+      - description: The UUID of the user
+        in: path
+        name: UUID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Toggles a users locked account status
+      tags:
+      - Users
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login user with email and password
+      parameters:
+      - description: User Login Info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/main.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Login user
+      tags:
+      - Auth
+  /remlocked:
+    delete:
+      description: Deletes all the locked users as a form of cleaning
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Deletes all the locked users as a form of cleaning
+      tags:
+      - Users
+  /remubyid/{UUID}:
+    delete:
+      description: Removes a user based off their uuid assigned at creation
+      parameters:
+      - description: The UUID of the user
+        in: path
+        name: UUID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Removes a user based off their uuid assigned at creation
+      tags:
+      - Users
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Gets all users and their subfeilds
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.User'
+      security:
+      - ApiKeyAuth: []
+      summary: Gets all users and their subfeilds
+      tags:
+      - Users
+  /users/employees:
+    get:
+      consumes:
+      - application/json
+      description: Gets employees based off json boolean value
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.User'
+      security:
+      - ApiKeyAuth: []
+      summary: Gets employees based off json boolean value
+      tags:
+      - Users
+  /users/locked:
+    get:
+      consumes:
+      - application/json
+      description: Gets all users if they have locked accounts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.User'
+      security:
+      - ApiKeyAuth: []
+      summary: Gets all users if they have locked accounts
+      tags:
+      - Users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: LoginToken
+    type: apiKey
+swagger: "2.0"
