@@ -4,10 +4,18 @@ Using swaggo i have added swagger and documentation to this project. I also late
 
 Links used:
 https://github.com/swaggo/swag
+
 https://github.com/gin-gonic/gin?tab=readme-ov-file
+
 https://github.com/jmoiron/sqlx
+
 https://pkg.go.dev/github.com/jmoiron/sqlx#section-readme
+
 https://stackoverflow.com/questions/56176814/how-to-add-jwt-auth-to-swagger-go-echo-swaggo-swag
+
 https://codewithmukesh.com/blog/jwt-authentication-in-golang/
+
 https://github.com/dgrijalva/jwt-go
+
 https://pkg.go.dev/golang.org/x/crypto/bcrypt
+
