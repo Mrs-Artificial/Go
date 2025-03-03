@@ -278,26 +278,27 @@ func getLockedUserJson(c *gin.Context) {
 // @Failure      400  {string}  string
 // @Router       /lockbyid/{UUID} [post]
 func lockUserJson(c *gin.Context) {
-	uuid := c.Param("UUID")
-	_, err := db.Query("UPDATE users SET `lock` = NOT `lock` WHERE ID=?", uuid)
+    uuid := c.Param("UUID")
+    _, err := db.Exec("UPDATE users SET `lock` = NOT `lock` WHERE ID=?", uuid)
 
-	if err == nil {
-		c.JSON(http.StatusOK, gin.H{"sucess": "User account lock status changed successfully"})
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update lock status: " + err.Error()})
+        return
+    }
 
-		users, err := getFieldFromDB(ID, uuid)
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Wrong ID!"})
-			return
-		}
-		user := users[0]
-		if user.Lock {
-			invalidateToken(tokenList[user.Email])
-		}
+    users, err := getFieldFromDB(ID, uuid)
+    if err != nil || len(users) == 0 {
+        c.JSON(401, gin.H{"error": "Wrong ID!"})
+        return
+    }
 
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ERROR"})
-	}
+    user := users[0]
+    if user.Lock {
+        println("User locked, invalidating token")
+        invalidateToken(user.Email)
+    }
 
+    c.JSON(http.StatusOK, gin.H{"success": "User account lock status changed successfully"})
 }
 
 // @Summary      Deletes all the locked users as a form of cleaning
@@ -311,10 +312,7 @@ func lockUserJson(c *gin.Context) {
 func deleteAllLockedUsersJson(c *gin.Context) {
 
 	_, err := db.Query("DELETE FROM users WHERE `lock` = 1")
-	//clear entire blacklist as there is no need to have these when all locked users are deleted
-	for key := range tokenBlacklist {
-		delete(tokenBlacklist, key)
-	}
+
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"sucess": "User removed successfully"})
 	} else {
@@ -398,36 +396,33 @@ func isEmailValid(e string) bool {
 	return emailRegex.MatchString(e)
 }
 func isPassValid(s string) bool {
-	chars := 0;
-	numbers := 0;
-	symbols := 0;
-	upper := false;
+	chars := 0
+	numbers := 0
+	symbols := 0
+	upper := false
 
 	for _, c := range s {
 		switch {
 		case unicode.IsNumber(c):
-			numbers++;
-			chars++;
+			numbers++
+			chars++
 		case unicode.IsSymbol(c) || unicode.IsPunct(c):
-			symbols++;
-			chars++;
+			symbols++
+			chars++
 		case unicode.IsUpper(c):
-			chars++;
-			upper = true;
+			chars++
+			upper = true
 		default:
-			chars++;
+			chars++
 		}
 	}
-	
-	if(chars >= 12 && numbers >= 3 && symbols >= 2 && upper){
-		return true;
+
+	if chars >= 12 && numbers >= 3 && symbols >= 2 && upper {
+		return true
 
 	}
-	return false;
+	return false
 
-
-	
-	
 }
 
 func getFieldFromDB(t DBGetType, value string) ([]User, error) {
@@ -475,7 +470,6 @@ func getFieldFromDB(t DBGetType, value string) ([]User, error) {
 
 //jwt
 
-var tokenBlacklist = make(map[string]bool)
 var tokenList = make(map[string]string)
 
 func generateToken(email string) (string, error) {
@@ -495,37 +489,36 @@ func generateToken(email string) (string, error) {
 	return token.SignedString(jwtKey)
 }
 
-func invalidateToken(tokenString string) error {
-	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
-
-	if err != nil || !token.Valid {
-		return errors.New("invalid token")
-	}
-
-	// Add the token's jti to the blacklist and remove it from the whitelist.
-	delete(tokenList, claims.Email)
-	tokenBlacklist[claims.Id] = true
-	return nil
+func invalidateToken(email string) {
+	delete(tokenList, email)
 }
 
 func validateToken(tokenString string) (*Claims, error) {
-	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
+    claims := &Claims{}
+    token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+        return jwtKey, nil
+    })
 
-	if err != nil {
-		return nil, err
-	}
+    if err != nil {
+        return nil, err
+    }
 
-	if !token.Valid || tokenBlacklist[claims.Id] {
-		return nil, errors.New("invalid token")
-	}
+    if !token.Valid {
+        return nil, errors.New("invalid token")
+    }
 
-	return claims, nil
+    // Check if the user's account is locked
+    users, err := getFieldFromDB(Email, claims.Email)
+    if err != nil || len(users) == 0 {
+        return nil, errors.New("user not found")
+    }
+
+    user := users[0]
+    if user.Lock {
+        return nil, errors.New("user account is locked")
+    }
+
+    return claims, nil
 }
 
 func generateTokenID() string {
@@ -543,10 +536,12 @@ func authMiddleware() gin.HandlerFunc {
 
 		claims, err := validateToken(tokenString)
 		if err != nil {
+
 			c.JSON(401, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return
 		}
+	
 
 		c.Set("email", claims.Email)
 		c.Next()
@@ -608,4 +603,5 @@ type RegisterRequest struct {
 	Age      int    `json:"age"`
 	Employee bool   `json:"employee"`
 }
-*/
+	*/
+	
