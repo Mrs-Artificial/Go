@@ -278,27 +278,27 @@ func getLockedUserJson(c *gin.Context) {
 // @Failure      400  {string}  string
 // @Router       /lockbyid/{UUID} [post]
 func lockUserJson(c *gin.Context) {
-    uuid := c.Param("UUID")
-    _, err := db.Exec("UPDATE users SET `lock` = NOT `lock` WHERE ID=?", uuid)
+	uuid := c.Param("UUID")
+	_, err := db.Exec("UPDATE users SET `lock` = NOT `lock` WHERE ID=?", uuid)
 
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update lock status: " + err.Error()})
-        return
-    }
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update lock status: " + err.Error()})
+		return
+	}
 
-    users, err := getFieldFromDB(ID, uuid)
-    if err != nil || len(users) == 0 {
-        c.JSON(401, gin.H{"error": "Wrong ID!"})
-        return
-    }
+	users, err := getFieldFromDB(ID, uuid)
+	if err != nil || len(users) == 0 {
+		c.JSON(401, gin.H{"error": "Wrong ID!"})
+		return
+	}
 
-    user := users[0]
-    if user.Lock {
-        println("User locked, invalidating token")
-        invalidateToken(user.Email)
-    }
+	user := users[0]
+	if user.Lock {
+		println("User locked, invalidating token")
+		invalidateToken(user.Email)
+	}
 
-    c.JSON(http.StatusOK, gin.H{"success": "User account lock status changed successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": "User account lock status changed successfully"})
 }
 
 // @Summary      Deletes all the locked users as a form of cleaning
@@ -494,31 +494,31 @@ func invalidateToken(email string) {
 }
 
 func validateToken(tokenString string) (*Claims, error) {
-    claims := &Claims{}
-    token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-        return jwtKey, nil
-    })
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    if !token.Valid {
-        return nil, errors.New("invalid token")
-    }
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
 
-    // Check if the user's account is locked
-    users, err := getFieldFromDB(Email, claims.Email)
-    if err != nil || len(users) == 0 {
-        return nil, errors.New("user not found")
-    }
+	// Check if the user's account is locked
+	users, err := getFieldFromDB(Email, claims.Email)
+	if err != nil || len(users) == 0 {
+		return nil, errors.New("user not found")
+	}
 
-    user := users[0]
-    if user.Lock {
-        return nil, errors.New("user account is locked")
-    }
+	user := users[0]
+	if user.Lock {
+		return nil, errors.New("user account is locked")
+	}
 
-    return claims, nil
+	return claims, nil
 }
 
 func generateTokenID() string {
@@ -541,7 +541,6 @@ func authMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-	
 
 		c.Set("email", claims.Email)
 		c.Next()
@@ -603,5 +602,4 @@ type RegisterRequest struct {
 	Age      int    `json:"age"`
 	Employee bool   `json:"employee"`
 }
-	*/
-	
+*/
